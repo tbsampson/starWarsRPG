@@ -1,0 +1,17 @@
+
+.card {
+    align-items: center;    
+}
+
+.tt-pics {
+    height: 175px;
+    width: auto;
+    align-items: center;
+}
+
+.tt-defeated {
+    height: 100px;
+    width: 37px;
+    align-items: center;
+}
+
