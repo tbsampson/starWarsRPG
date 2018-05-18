@@ -4,7 +4,7 @@
 }
 
 .tt-pics {
-    height: 175px;
+    height: 100px;
     width: auto;
     align-items: center;
 }
@@ -13,5 +13,9 @@
     height: 100px;
     width: 37px;
     align-items: center;
+}
+
+.red {
+    background-color: red;
 }
 
