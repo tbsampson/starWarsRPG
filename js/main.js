@@ -1,173 +1,131 @@
-
 // Global variables
-var tubbieStatus = 0; // 0 = default starting, 1 = available for battle, 2 = ready to attack, 3 = defeated
 var opponentStatus = false; // false if no opponent, true if an opponent has been selected
 var levelUpEnergy = 50; // how much energy to add on level-up
+var musicPlaying = false;
 
-// All of the tubbies
-const allTubbies = [
-    {
-        id: 0,
-        sname: "tinky_winky",
-        name: "Tinky Winky",
-        pic: "images/tinky_winky.jpg",
-        wiki: "http://teletubbies.wikia.com/wiki/Tinky-Winky",
-        energy: 600,
-        minAtk: 5,
-        maxAtk: 25
-    },
-    {
-        id: 1,
-        sname: "dipsy",
-        name: "Dipsy",
-        pic: "images/dipsy.jpg",
-        wiki: "http://teletubbies.wikia.com/wiki/Dipsy",
-        energy: 250,
-        minAtk: 25,
-        maxAtk: 65
-    },
-    {
-        id: 2,
-        sname: "laa_laa",
-        name: "Laa Laa",
-        pic: "images/laa_laa.jpg",
-        wiki: "http://teletubbies.wikia.com/wiki/Laa-Laa",
-        energy: 200,
-        minAtk: 30,
-        maxAtk: 75
-    },
-    {
-        id: 3,
-        sname: "po",
-        name: "Po",
-        pic: "images/po.jpg",
-        wiki: "http://teletubbies.wikia.com/wiki/Po",
-        energy: 100,
-        minAtk: 50,
-        maxAtk: 100
-    }
-];
-
-
-// List the Teletubbies in the about section
-console.log("We have " + allTubbies.length + " Teletubbies ready to play!");
-for (var i = 0; i < allTubbies.length; i++) {
-    $( ".list-unstyled" ).append( $( `<li><a href="${allTubbies[i].wiki}" target="_blank" class="text-white">${allTubbies[i].name}</a></li>` ) );
-}
 resetGame(); // start new game
 
-   // Select a Teletubbie to play
-   $(document).on('click', ".btn.btn-outline-secondary.btn-sm", function() { // clicked the battle button
+// List the Teletubbies in the about section
+console.log("We have " + availableTubbies.length + " Teletubbies ready to play!");
+for (var i = 0; i < availableTubbies.length; i++) {
+    $( ".list-unstyled" ).append( $( `<li><a href="${availableTubbies[i].wiki}" target="_blank" class="text-white">${availableTubbies[i].name}</a></li>` ) );
+}
+
+// Select a Teletubbie to play
+$(document).on('click', ".btn.btn-outline-secondary.btn-sm", function() { // clicked the select button
     var myClasses = this.classList;
     var chosenTubbieId = parseInt(myClasses[3]);
-    console.log("Player chose tubbie id: " + chosenTubbieId);
     // clear the arena
     $( ".row.arena" ).empty();
 
-    //remove chosen tubbie from available tubbies
-    availableTubbies.splice(chosenTubbieId,1); //remove the chosen tubbie from list of available tubbies
-    console.log("Available Tubbies...");
-    console.log(availableTubbies);
-
     //create a new array for the chosen tubbie
-    for(var i = 0; i < allTubbies.length; i++) {
-        var checkId = parseInt(allTubbies[i].id); // find matching id
+    for(var i = 0; i < availableTubbies.length; i++) {
+        var checkId = parseInt(availableTubbies[i].id); // find matching id
         if (checkId === chosenTubbieId) {
-            console.log("found chosen tubbie");
-                var chosenTubbie = [].concat(allTubbies[i]); // add tubbie with matching id to chosen array
+            chosenTubbie = [].concat(availableTubbies[i]); // add tubbie with matching id to chosen array
         }
     }
-    console.log("Chosen Tubbie...");
-    console.log(chosenTubbie);
-    $(".row.chatter").empty();   
-    $(".row.chatter").append(`<p>You chose ${chosenTubbie[0].name}! Now choose your first opponent!</p>`); // chosen tubbie id is always 0
-    placeCards(chosenTubbie, "arena", 2); //put the other tubbies in the dugout
+
+    //remove chosen tubbie from available tubbies
+    availableTubbies.splice(chosenTubbieId,1); //remove the chosen tubbie from list of available tubbies
+    placeCards(chosenTubbie, "arena", 3); //put the other tubbies in the dugout
     placeCards(availableTubbies, "dugout", 1); //put the other tubbies in the dugout
+    $(".row.chatter").empty();   
+    $(".row.chatter").append(`<p>You chose ${chosenTubbie[0].name}! Now choose your first opponent!</p>`);
 
-    // Check to see if a Battle button was pressed
-    $(document).on('click', ".btn.btn-warning", function() { // clicked the battle button        
-        var opponentClasses = this.classList; // the tubbie id was added to the class list, get it
-        var opponentTubbieId = parseInt(opponentClasses[3]);
-        console.log("Player chose opponent tubbie id: " + opponentTubbieId);
-        console.log("Battle Button Pressed");
-        if (opponentStatus===false) { // If no opponent chosen yet
-            chooseOpponent(opponentTubbieId);
-        }
-    });
-    startingChosenEnergy = chosenTubbie[0].energy; // temporarilly store chosen energy
-    console.log(startingChosenEnergy);
+    //set chosen tubbie starting energy
+    startingChosenEnergy = chosenTubbie[0].energy;
 
-    // Check to see if attack button was pressed
-    $(document).on('click', ".btn.btn-danger", function() { // clicked the red button
-        console.log("Attack Button Pressed");
+    // play greeting
+    $(".row.arena").append(`<audio autoplay src="${chosenTubbie[0].greeting}" type="audio/mpeg"></audio>`)
 
+    
 
-        if (opponentStatus===false) {
-            $(".row.chatter").empty();
-            $(".row.chatter").append(`<p>You must first have an opponent to attack!  Choose one of the Teletubbies below</p>`); // chosen tubbie id is always 0
-
-        } else if (opponentStatus===true){
-            let chosenAtk = 0;
-            let opponentAtk = 0;
-            // generate random attack from chosen and opponents between minAtm and maxAtk
-            console.log(`Chosen attack range: ${chosenTubbie[0].minAtk}-${chosenTubbie[0].maxAtk}`);
-            chosenAtk = randomAtk(chosenTubbie[0].minAtk,chosenTubbie[0].maxAtk);
-            console.log(`Chosen attacks for ${chosenAtk}`)
-            console.log(`Opponent attack range: ${opponentTubbie[0].minAtk}-${opponentTubbie[0].maxAtk}`);
-            opponentAtk = randomAtk(opponentTubbie[0].minAtk,opponentTubbie[0].maxAtk);
-            console.log(`Opponent attacks for ${opponentAtk}`)
-            $(".row.chatter").empty();
-            $(".row.chatter").append(`<p>You drain ${chosenAtk} energy from ${opponentTubbie[0].name}! ---><p>`); // attack message
-            $(".row.chatter").append(`<p class="text-danger"> <---${opponentTubbie[0].name} drains ${opponentAtk} energy from you!</p>`); // attack message
-            chosenTubbie[0].energy = chosenTubbie[0].energy - opponentAtk;
-            opponentTubbie[0].energy = opponentTubbie[0].energy - chosenAtk;
-            console.log(`Chosen energy = ${chosenTubbie[0].energy}`)
-            console.log(`Opponent energy = ${opponentTubbie[0].energy}`)
-            if (opponentTubbie[0] === 'undefined') {
-                $(".row.chatter").empty();
-                $(".row.chatter").append(`<p class="text-danger">You don't have an opponent!</p>`);                
-            } else if (chosenTubbie[0].energy <= 0){ // Player loses game
-                $(".row.chatter").empty();
-                $(".row.chatter").append(`<p class="text-danger">Uh oh!  You fell asleep!  Sorry, game over!</p><button type="button" class="btn btn-sm btn-success"><span><h3>Play Again</h3></span></button>`);
-                $(document).on('click', ".btn.btn-sm.btn-success", function() { location.reload(); });
-                $( ".row.arena" ).empty();
-                placeCards(chosenTubbie, "arena", 3); // remove attack button
-                placeCards(opponentTubbie, "arena", 3);
-
-            } else if (opponentTubbie[0].energy <= 0){ // Player wins battle
-                $(".row.chatter").empty();
-                $(".row.chatter").append(`<p class="text-success">Victory! ${opponentTubbie[0].name} has fallen asleep!</p>`);
-                chosenTubbie[0].energy = startingChosenEnergy + (4 - availableTubbies.length) * levelUpEnergy;
-                console.log("available tubbies");
-                console.log(availableTubbies);
-
-                $( ".row.arena" ).empty(); 
-                placeCards(chosenTubbie, "arena", 2); // redraw chosen with new energy level
-
-                placeCards(opponentTubbie, "bed", 3); // move defeated opponent to bed
-                opponentTubbie.length = 0; //and remove him from opponentTubbie
-                opponentStatus=false;
-
-                $( ".row.dugout" ).empty();
-                placeCards(availableTubbies, "dugout", 1); // redraw the dugout with available tubbies, add button so they can be selected
-
-                if (availableTubbies.length <=0 && opponentTubbie.length <=0) { // check to see if player also won game
-                    $(".row.chatter").append(`<p class="text-success">..Congratulations, YOU WON!!!...</p><button type="button" class="btn btn-sm btn-success"><span><h3>Play Again</h3></span></button>`);
-                    $(document).on('click', ".btn.btn-sm.btn-success", function() { location.reload(); });
-                    $( ".row.arena" ).empty();
-                    placeCards(chosenTubbie, "arena", 3);
-                }
-
-            }
-             else { // redraw for next round, this shows energy change after each attack
-                $( ".row.arena" ).empty();
-                placeCards(chosenTubbie, "arena", 2);
-                placeCards(opponentTubbie, "arena", 3);
-            }
-            
-        }
-    });
+    // Background music controls
+    if (musicPlaying === false) {
+        setTimeout(function(){
+            $(".container.d-flex.justify-content-between").append(`<audio autoplay loop controls src="${backgroundMusic}" type="audio/mpeg"></audio>`)
+            musicPlaying = true;
+        }, 3000); // delay it a bit so doesn't talk over music start
+    }
+    
 });
+
+// Check to see if a Battle button was pressed
+$(document).on('click', ".btn.btn-warning", function() { // clicked the battle button        
+    var opponentClasses = this.classList; // the tubbie id was added to the class list, get it
+    var opponentTubbieId = parseInt(opponentClasses[3]);
+    console.log("Player chose opponent tubbie id: " + opponentTubbieId);
+    console.log("Battle Button Pressed");
+    if (opponentStatus===false) { // If no opponent chosen yet
+        chooseOpponent(opponentTubbieId);
+    }
+    // play greeting
+    $(".row.arena").append(`<audio autoplay src="${opponentTubbie[0].greeting}" type="audio/mpeg"></audio>`)    
+});
+
+// Check to see if attack button was pressed
+$(document).on('click', ".btn.btn-danger", function() { // clicked the red button
+    let chosenAtk = 0;
+    let opponentAtk = 0;
+    
+    // generate random attack from chosen and opponents between minAtm and maxAtk
+    chosenAtk = randomAtk(chosenTubbie[0].minAtk,chosenTubbie[0].maxAtk);
+    opponentAtk = randomAtk(opponentTubbie[0].minAtk,opponentTubbie[0].maxAtk);
+    $(".row.chatter").empty();
+    $(".row.chatter").append(`<p>You drain ${chosenAtk} energy from ${opponentTubbie[0].name}! ---><p>`); // attack message
+    $(".row.chatter").append(`<p class="text-danger"> <---${opponentTubbie[0].name} drains ${opponentAtk} energy from you!</p>`); // attack message
+    chosenTubbie[0].energy = chosenTubbie[0].energy - opponentAtk;
+    opponentTubbie[0].energy = opponentTubbie[0].energy - chosenAtk;
+    
+    if (opponentTubbie[0] === 'undefined') {
+        $(".row.chatter").empty();
+        $(".row.chatter").append(`<p class="text-danger">You don't have an opponent!</p>`);                
+    } else if (chosenTubbie[0].energy <= 0){ // Player loses game
+        $(".row.chatter").empty();
+        $(".row.chatter").append(`<p class="text-danger">Uh oh!  You fell asleep!  Sorry, game over!</p><button type="button" class="btn btn-sm btn-success"><span><h3>Play Again</h3></span></button>`);
+        $(document).on('click', ".btn.btn-sm.btn-success", function() { resetGame(); });
+        $( ".row.arena" ).empty();
+        placeCards(chosenTubbie, "arena", 3); // remove attack button
+        placeCards(opponentTubbie, "arena", 3);
+
+        // say again again
+        $(".row.dugout").append(`<audio autoplay src="${tubbieSounds[0].again}" type="audio/mpeg"></audio>`)    
+
+    } else if (opponentTubbie[0].energy <= 0){ // Player wins battle
+        $(".row.chatter").empty();
+        $(".row.chatter").append(`<p class="text-success">Victory! ${opponentTubbie[0].name} has fallen asleep!</p>`);
+        chosenTubbie[0].energy = startingChosenEnergy + (4 - availableTubbies.length) * levelUpEnergy;
+        $( ".row.arena" ).empty(); 
+        placeCards(chosenTubbie, "arena", 3); // redraw chosen with new energy level
+        placeCards(opponentTubbie, "bed", 3); // move defeated opponent to bed
+        $( ".row.dugout" ).empty(); 
+        placeCards(availableTubbies, "dugout", 1); // move defeated opponent to bed
+        opponentTubbie.length = 0; //and remove him from opponentTubbie
+        opponentStatus=false;
+
+        // say bye
+        $(".row.bed").append(`<audio autoplay src="${tubbieSounds[0].bye}" type="audio/mpeg"></audio>`)    
+
+        if (availableTubbies.length <=0 && opponentTubbie.length <=0) { // check to see if player also won game
+            $(".row.chatter").append(`<p class="text-success">..Congratulations, YOU WON!!!...</p><button type="button" class="btn btn-sm btn-success"><span><h3>Play Again</h3></span></button>`);
+            $(document).on('click', ".btn.btn-sm.btn-success", function() {resetGame(); });
+            $( ".row.arena" ).empty();
+            placeCards(chosenTubbie, "arena", 3);
+            // say hooray
+            $(".row.chatter").append(`<audio autoplay src="${tubbieSounds[0].hooray}" type="audio/mpeg"></audio>`)    
+
+        }
+
+    }
+        else { // redraw for next round, this shows energy change after each attack
+        $( ".row.arena" ).empty();
+        placeCards(chosenTubbie, "arena", 3);
+        placeCards(opponentTubbie, "arena", 2);
+    }
+        
+});
+
 
 
 function resetGame () {
@@ -176,11 +134,13 @@ function resetGame () {
     $( ".row.dugout" ).empty(); 
     $( ".row.bed" ).empty(); 
     // Some globals
-    chosenTubbie = new Array(); // tubbie player has chosen to play as
-    opponentTubbie = new Array(); // this tubbie is the active opponent
-    availableTubbies = new Array(); // remaining tubbies
-    availableTubbies = [].concat(allTubbies) // Innitially all tubbies are available
-    defeatedTubbies = new Array(); // defeated tubbies    
+    chosenTubbie = []; // tubbie player has chosen to play as
+    opponentTubbie = []; // this tubbie is the active opponent
+    availableTubbies = []; // remaining tubbies
+    //availableTubbies = [].concat(allTubbies) // Innitially all tubbies are available
+    resetTubbies();
+    defeatedTubbies = []; // defeated tubbies
+    opponentStatus=false;
     placeCards(availableTubbies, "arena", 0); // Show all the tubbies in the arena at start of game and set game status 0 (new game)
     gameOver = false;
 }
@@ -258,7 +218,7 @@ function chooseOpponent(opId) {
                         console.log(availableTubbies);
                     }
             }
-            placeCards(opponentTubbie, "arena", 3); //put the other tubbies in the dugout
+            placeCards(opponentTubbie, "arena", 2); //put the other tubbies in the dugout
             $( ".row.dugout" ).empty();
             placeCards(availableTubbies, "dugout", 3); //put the other tubbies in the dugout
         }            
