@@ -43,10 +43,8 @@ $(document).on('click', ".btn.btn-outline-secondary.btn-sm", function() { // cli
 
     // Background music controls
     if (musicPlaying === false) {
-        setTimeout(function(){
             $(".container.d-flex.justify-content-between").append(`<audio autoplay loop controls src="${backgroundMusic}" type="audio/mpeg"></audio>`)
             musicPlaying = true;
-        }, 3000); // delay it a bit so doesn't talk over music start
     }
     
 });
