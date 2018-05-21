@@ -39,14 +39,11 @@ $(document).on('click', ".btn.btn-outline-secondary.btn-sm", function() { // cli
     // play greeting
     $(".row.arena").append(`<audio autoplay src="${chosenTubbie[0].greeting}" type="audio/mpeg"></audio>`)
 
-    
-
     // Background music controls
     if (musicPlaying === false) {
             $(".container.d-flex.justify-content-between").append(`<audio autoplay loop controls src="${backgroundMusic}" type="audio/mpeg"></audio>`)
             musicPlaying = true;
     }
-    
 });
 
 // Check to see if a Battle button was pressed
@@ -114,17 +111,13 @@ $(document).on('click', ".btn.btn-danger", function() { // clicked the red butto
             $(".row.chatter").append(`<audio autoplay src="${tubbieSounds[0].hooray}" type="audio/mpeg"></audio>`)    
 
         }
-
     }
         else { // redraw for next round, this shows energy change after each attack
         $( ".row.arena" ).empty();
         placeCards(chosenTubbie, "arena", 3);
         placeCards(opponentTubbie, "arena", 2);
     }
-        
 });
-
-
 
 function resetGame () {
     $( ".row.arena" ).empty(); 
@@ -148,7 +141,6 @@ function randomAtk(min,max)
 {
     return Math.floor(Math.random()*(max-min+1)+min);
 }
-
 
 // Place the tubbies in the appropriate place 
 function placeCards(tubbieList, putWhere, tubbieStatus) {
@@ -183,19 +175,16 @@ function placeCards(tubbieList, putWhere, tubbieStatus) {
                     <p class="card-text">Energy: ${tubbieList[i].energy}
                     <br>Attack: ${tubbieList[i].minAtk}-${tubbieList[i].maxAtk}</p>
                         <div class="d-flex justify-content-between align-items-center ${tubbieList[i].sname}">
-                            
                        </div>
                     </div>
                 </div>
             </div>
         </div>`));
-
         if (hideButton===false) { // Only show button when it's time to pick a tubbie
             $( `.d-flex.justify-content-between.align-items-center.${tubbieList[i].sname}` ).append( $( `<div class="btn-group"><button type="button" class="btn ${buttonColor} btn-sm ${tubbieList[i].id}">${buttonLabel}</button></div>`));
         }
     }
 }
-
 
 function chooseOpponent(opId) {
         //create a new array for the opponent tubbie
